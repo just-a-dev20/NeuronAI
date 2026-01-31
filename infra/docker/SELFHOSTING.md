@@ -367,4 +367,4 @@ For issues and questions:
 
 ## License
 
-MIT License - see LICENSE file for details
+GNU Affero General Public License v3.0 (AGPL v3) - see LICENSE file for details

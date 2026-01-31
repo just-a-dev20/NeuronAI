@@ -212,4 +212,4 @@ See `proto/neuronai.proto` or [Protocol Buffers documentation](docs/protobuf.md)
 
 ## License
 
-MIT License - see LICENSE file for details
+GNU Affero General Public License v3.0 (AGPL v3) - see LICENSE file for details

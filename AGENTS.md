@@ -82,3 +82,16 @@ Rerun the loop (Step 1).
 Max Limit: 3 iterations.
 
 Reporting: Conclude by summarizing outcomes, applied fixes, and remaining issues to the user.
+
+5. Git Workflow & Branching Strategy
+Pull Requests Required: ALWAYS create a pull request for any code changes. NEVER push directly to the main or master branch.
+
+Branch Naming: Use descriptive branch names following the pattern: `feature/description`, `fix/description`, `refactor/description`, or `docs/description`.
+
+Workflow:
+- Create a new branch from main: `git checkout -b feature/description`
+- Make commits with clear, descriptive messages
+- Push the branch: `git push -u origin feature/description`
+- Create a pull request using the GitHub CLI: `gh pr create --title "..." --body "..."`
+- Wait for review approval before merging
+- Never use `git push origin main` or similar direct pushes to protected branches

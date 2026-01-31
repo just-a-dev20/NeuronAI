@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"io"
 	"net"
 	"testing"
 	"time"
@@ -40,6 +41,9 @@ func (m *mockAIService) ProcessStream(stream pb.AIService_ProcessStreamServer) e
 	for {
 		req, err := stream.Recv()
 		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
 			return err
 		}
 

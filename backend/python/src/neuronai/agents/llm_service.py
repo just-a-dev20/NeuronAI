@@ -1,6 +1,7 @@
 """LLM service for handling AI model interactions."""
 
-from typing import AsyncIterator, Dict, Any, Optional
+from collections.abc import AsyncIterator
+from typing import Any, Optional
 from enum import Enum
 import structlog
 from openai import AsyncOpenAI
@@ -82,8 +83,8 @@ class LLMService:
             response = await self.client.chat.completions.create(
                 model=model or self.settings.default_model,
                 messages=messages,
-                max_tokens=max_tokens or self.settings.max_tokens,
-                temperature=temperature or self.settings.temperature,
+                max_tokens=max_tokens if max_tokens is not None else self.settings.max_tokens,
+                temperature=temperature if temperature is not None else self.settings.temperature,
             )
 
             content = response.choices[0].message.content
@@ -154,8 +155,8 @@ class LLMService:
             stream = await self.client.chat.completions.create(
                 model=model or self.settings.default_model,
                 messages=messages,
-                max_tokens=max_tokens or self.settings.max_tokens,
-                temperature=temperature or self.settings.temperature,
+                max_tokens=max_tokens if max_tokens is not None else self.settings.max_tokens,
+                temperature=temperature if temperature is not None else self.settings.temperature,
                 stream=True,
             )
 

@@ -16,7 +16,7 @@ import (
 
 type claimsKey string
 
-const testClaimsKey claimsKey = "claims"
+const testClaimsKey claimsKey = "jwt_claims"
 
 type testClaims struct {
 	UserID string

@@ -40,7 +40,7 @@ func TestJWTAuth(t *testing.T) {
 		},
 		{
 			name:           "valid token",
-			authHeader:     generateValidToken(secret),
+			authHeader:     generateValidToken(t, secret),
 			expectedStatus: http.StatusOK,
 		},
 	}
@@ -214,7 +214,7 @@ func TestGetClaims(t *testing.T) {
 	}
 }
 
-func generateValidToken(secret string) string {
+func generateValidToken(t *testing.T, secret string) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		UserID: "test-user",
 		Email:  "test@example.com",
@@ -222,6 +222,9 @@ func generateValidToken(secret string) string {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 		},
 	})
-	tokenString, _ := token.SignedString([]byte(secret))
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		t.Fatalf("Failed to sign token: %v", err)
+	}
 	return "Bearer " + tokenString
 }

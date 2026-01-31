@@ -169,7 +169,7 @@ class TestServe:
 
     @pytest.mark.asyncio
     async def test_serve_initialization(self):
-        """Test that serve can be initialized."""
+        """Test that serve can be initialized and handles cancellation gracefully."""
         with patch("neuronai.grpc.server.get_settings") as mock_settings:
             mock_settings.return_value = MagicMock(service_port=50051)
 
@@ -181,9 +181,9 @@ class TestServe:
             with (
                 patch("grpc.aio.server", return_value=server_mock),
                 patch("neuronai.grpc.server.neuronai_pb2_grpc.add_AIServiceServicer_to_server"),
-                pytest.raises(asyncio.CancelledError),
             ):
                 await serve()
+                server_mock.stop.assert_awaited_once_with(5)
 
     @pytest.mark.asyncio
     async def test_serve_graceful_shutdown(self):
@@ -200,10 +200,8 @@ class TestServe:
                 patch("grpc.aio.server", return_value=server_mock),
                 patch("neuronai.grpc.server.neuronai_pb2_grpc.add_AIServiceServicer_to_server"),
             ):
-                with pytest.raises(asyncio.CancelledError):
-                    await serve()
-
-                server_mock.stop.assert_called_once_with(5)
+                await serve()
+                server_mock.stop.assert_awaited_once_with(5)
 
 
 class TestIntegration:

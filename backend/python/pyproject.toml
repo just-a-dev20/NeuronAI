@@ -36,8 +36,17 @@ build-backend = "hatchling.build"
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+exclude = [
+    "src/neuronai/grpc/neuronai_pb2.py",
+    "src/neuronai/grpc/neuronai_pb2_grpc.py",
+]
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
 ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/neuronai/grpc/server.py" = ["N802"]
 
 [tool.ruff.format]
 quote-style = "double"

@@ -2,16 +2,16 @@
 
 import asyncio
 import uuid
-from datetime import datetime
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
+from concurrent import futures
 
 import grpc
 import structlog
 from grpc import aio
 
+from neuronai.agents.orchestrator import SwarmOrchestrator
 from neuronai.config.settings import get_settings
 from neuronai.grpc import neuronai_pb2, neuronai_pb2_grpc
-from neuronai.agents.orchestrator import SwarmOrchestrator
 
 logger = structlog.get_logger()
 

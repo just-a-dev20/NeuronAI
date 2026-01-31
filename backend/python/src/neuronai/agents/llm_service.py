@@ -1,8 +1,9 @@
 """LLM service for handling AI model interactions."""
 
 from collections.abc import AsyncIterator
-from typing import Any, Optional
 from enum import Enum
+from typing import Any
+
 import structlog
 from openai import AsyncOpenAI
 
@@ -26,7 +27,7 @@ class LLMService:
         self.settings = get_settings()
         self.logger = logger.bind(component="LLMService")
 
-        self.client: Optional[AsyncOpenAI] = None
+        self.client: AsyncOpenAI | None = None
         self.provider = LLMProvider.OPENAI
 
         self._initialize_client()
@@ -42,11 +43,11 @@ class LLMService:
     async def generate_response(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
-        model: Optional[str] = None,
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None,
-    ) -> Dict[str, Any]:
+        system_prompt: str | None = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+    ) -> dict[str, Any]:
         """Generate a response from the LLM.
 
         Args:
@@ -112,11 +113,11 @@ class LLMService:
     async def generate_stream(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
-        model: Optional[str] = None,
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None,
-    ) -> AsyncIterator[Dict[str, Any]]:
+        system_prompt: str | None = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+    ) -> AsyncIterator[dict[str, Any]]:
         """Generate a streaming response from the LLM.
 
         Args:
@@ -193,7 +194,7 @@ class LLMService:
                 "is_final": True,
             }
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """Get information about available models."""
         return {
             "provider": self.provider.value,

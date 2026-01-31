@@ -1,7 +1,7 @@
 """Prompt templates for LLM interactions."""
 
 from enum import Enum
-from typing import Dict, Any, Optional
+from typing import Any
 
 
 class PromptTemplate(Enum):
@@ -18,7 +18,7 @@ class PromptTemplate(Enum):
 class PromptTemplates:
     """Manager for LLM prompt templates."""
 
-    _templates: Dict[PromptTemplate, str] = {
+    _templates: dict[PromptTemplate, str] = {
         PromptTemplate.SYSTEM_PROMPT: (
             "You are NeuronAI, a helpful AI assistant designed to assist users "
             "with a wide range of tasks. You can help with:\n"
@@ -99,8 +99,8 @@ class PromptTemplates:
     @classmethod
     def build_system_prompt(
         cls,
-        additional_context: Optional[str] = None,
-        capabilities: Optional[list[str]] = None,
+        additional_context: str | None = None,
+        capabilities: list[str] | None = None,
     ) -> str:
         """Build a system prompt with optional additions.
 
@@ -126,7 +126,7 @@ class PromptTemplates:
     def build_chat_prompt(
         cls,
         user_message: str,
-        conversation_history: Optional[list[Dict[str, str]]] = None,
+        conversation_history: list[dict[str, str]] | None = None,
     ) -> str:
         """Build a chat prompt with optional conversation history.
 

@@ -1,7 +1,8 @@
 """Database models for NeuronAI."""
 
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -12,7 +13,7 @@ class User(BaseModel):
     email: str
     created_at: datetime
     updated_at: datetime
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class Session(BaseModel):
@@ -20,10 +21,10 @@ class Session(BaseModel):
 
     id: str
     user_id: str
-    title: Optional[str] = None
+    title: str | None = None
     created_at: datetime
     updated_at: datetime
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class Message(BaseModel):
@@ -35,8 +36,8 @@ class Message(BaseModel):
     content: str
     message_type: str = "text"  # text, image, video, code
     agent_type: str = "orchestrator"
-    attachments: List[Dict[str, Any]] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    attachments: list[dict[str, Any]] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime
 
@@ -49,5 +50,5 @@ class Attachment(BaseModel):
     filename: str
     mime_type: str
     size: int
-    url: Optional[str] = None
+    url: str | None = None
     created_at: datetime

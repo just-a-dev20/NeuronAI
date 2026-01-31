@@ -1,13 +1,12 @@
 """Tests for the swarm orchestrator."""
 
-import asyncio
 import pytest
 
 from neuronai.agents.orchestrator import (
-    SwarmOrchestrator,
     AgentState,
-    SwarmTask,
     AgentType,
+    SwarmOrchestrator,
+    SwarmTask,
 )
 
 

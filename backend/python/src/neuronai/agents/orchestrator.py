@@ -1,13 +1,15 @@
 """Swarm orchestrator for managing multiple AI agents."""
 
 import asyncio
-from typing import AsyncIterator, Dict, Any
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
+
 import structlog
 
 from neuronai.agents.llm_service import LLMService
-from neuronai.agents.prompt_templates import PromptTemplates, PromptTemplate
+from neuronai.agents.prompt_templates import PromptTemplates
 
 logger = structlog.get_logger()
 
@@ -31,7 +33,7 @@ class AgentState:
     agent_type: AgentType
     status: str = "idle"
     current_task: str = ""
-    memory: Dict[str, Any] = field(default_factory=dict)
+    memory: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -41,8 +43,8 @@ class SwarmTask:
     task_id: str
     session_id: str
     description: str
-    required_agents: list
-    context: Dict[str, Any] = field(default_factory=dict)
+    required_agents: list[str]
+    context: dict[str, Any] = field(default_factory=dict)
     status: str = "pending"
 
 
@@ -50,8 +52,8 @@ class SwarmOrchestrator:
     """Orchestrates multiple AI agents to complete complex tasks."""
 
     def __init__(self) -> None:
-        self.agents: Dict[str, AgentState] = {}
-        self.active_tasks: Dict[str, SwarmTask] = {}
+        self.agents: dict[str, AgentState] = {}
+        self.active_tasks: dict[str, SwarmTask] = {}
         self.llm_service = LLMService()
         self.logger = logger.bind(component="SwarmOrchestrator")
 
@@ -61,7 +63,7 @@ class SwarmOrchestrator:
         user_id: str,
         content: str,
         message_type: int = 1,  # TEXT
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Process a single message and return result."""
         self.logger.info(
             "Processing message",
@@ -89,7 +91,7 @@ class SwarmOrchestrator:
         user_id: str,
         content: str,
         message_type: int = 1,  # TEXT
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[dict[str, Any]]:
         """Process a message and stream response."""
         self.logger.info(
             "Processing stream",
@@ -111,7 +113,7 @@ class SwarmOrchestrator:
                 "is_final": chunk.get("is_final", False),
             }
 
-    async def execute_swarm_task(self, task: SwarmTask) -> AsyncIterator[Dict[str, Any]]:
+    async def execute_swarm_task(self, task: SwarmTask) -> AsyncIterator[dict[str, Any]]:
         """Execute a complex task using multiple agents."""
         self.logger.info(
             "Executing swarm task",

@@ -1,7 +1,9 @@
 """JWT validation utilities."""
 
-from typing import Optional, Dict, Any
-from jose import jwt, JWTError
+from typing import Any
+
+from jose import JWTError, jwt
+
 from neuronai.config.settings import get_settings
 
 
@@ -13,7 +15,7 @@ class JWTValidator:
         self.secret = settings.jwt_secret
         self.algorithm = settings.jwt_algorithm
 
-    def validate(self, token: str) -> Optional[Dict[str, Any]]:
+    def validate(self, token: str) -> dict[str, Any] | None:
         """Validate a JWT token and return the payload."""
         try:
             payload = jwt.decode(
@@ -25,7 +27,7 @@ class JWTValidator:
         except JWTError:
             return None
 
-    def get_user_id(self, token: str) -> Optional[str]:
+    def get_user_id(self, token: str) -> str | None:
         """Extract user ID from a valid token."""
         payload = self.validate(token)
         if payload:

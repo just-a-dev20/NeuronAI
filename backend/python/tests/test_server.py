@@ -1,11 +1,11 @@
 """Tests for gRPC server."""
 
 import asyncio
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 import grpc
 import grpc.aio
+import pytest
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from neuronai.grpc.server import AIServiceServicer, serve
@@ -169,7 +169,7 @@ class TestServe:
 
     @pytest.mark.asyncio
     async def test_serve_initialization(self):
-        """Test that serve can be initialized."""
+        """Test that serve can be initialized and handles cancellation gracefully."""
         with patch("neuronai.grpc.server.get_settings") as mock_settings:
             mock_settings.return_value = MagicMock(service_port=50051)
 
@@ -178,12 +178,12 @@ class TestServe:
             server_mock.wait_for_termination = AsyncMock(side_effect=asyncio.CancelledError())
             server_mock.stop = AsyncMock()
 
-            with patch("grpc.aio.server", return_value=server_mock):
-                with patch(
-                    "neuronai.grpc.server.neuronai_pb2_grpc.add_AIServiceServicer_to_server"
-                ):
-                    with pytest.raises(asyncio.CancelledError):
-                        await serve()
+            with (
+                patch("grpc.aio.server", return_value=server_mock),
+                patch("neuronai.grpc.server.neuronai_pb2_grpc.add_AIServiceServicer_to_server"),
+            ):
+                await serve()
+                server_mock.stop.assert_awaited_once_with(5)
 
     @pytest.mark.asyncio
     async def test_serve_graceful_shutdown(self):
@@ -196,14 +196,12 @@ class TestServe:
             server_mock.wait_for_termination = AsyncMock(side_effect=asyncio.CancelledError())
             server_mock.stop = AsyncMock()
 
-            with patch("grpc.aio.server", return_value=server_mock):
-                with patch(
-                    "neuronai.grpc.server.neuronai_pb2_grpc.add_AIServiceServicer_to_server"
-                ):
-                    with pytest.raises(asyncio.CancelledError):
-                        await serve()
-
-                    server_mock.stop.assert_called_once_with(5)
+            with (
+                patch("grpc.aio.server", return_value=server_mock),
+                patch("neuronai.grpc.server.neuronai_pb2_grpc.add_AIServiceServicer_to_server"),
+            ):
+                await serve()
+                server_mock.stop.assert_awaited_once_with(5)
 
 
 class TestIntegration:

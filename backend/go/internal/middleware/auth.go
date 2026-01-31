@@ -65,6 +65,11 @@ func GetClaims(ctx context.Context) (*Claims, bool) {
 	return claims, ok
 }
 
+// GetClaimsContextKey returns the context key used for storing JWT claims
+func GetClaimsContextKey() interface{} {
+	return claimsContextKey
+}
+
 func CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")

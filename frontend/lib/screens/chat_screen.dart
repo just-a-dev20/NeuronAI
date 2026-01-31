@@ -7,6 +7,7 @@ import '../providers/auth_provider.dart';
 import '../models/message_model.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/chat_input.dart';
+import 'settings_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -53,7 +54,12 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // TODO: Navigate to settings
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
             },
           ),
           IconButton(

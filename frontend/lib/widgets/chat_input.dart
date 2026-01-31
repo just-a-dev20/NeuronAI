@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 import '../providers/chat_provider.dart';
 
 class ChatInput extends StatefulWidget {
@@ -33,6 +34,28 @@ class _ChatInputState extends State<ChatInput> {
     _focusNode.requestFocus();
   }
 
+  Future<void> _handleAttachment() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        if (file.path != null) {
+          context.read<ChatProvider>().sendFile(file.path!, file.name);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking file: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -50,9 +73,7 @@ class _ChatInputState extends State<ChatInput> {
           children: [
             IconButton(
               icon: const Icon(Icons.attach_file),
-              onPressed: () {
-                // TODO: Implement file attachment
-              },
+              onPressed: _handleAttachment,
             ),
             Expanded(
               child: TextField(

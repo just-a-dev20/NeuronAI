@@ -126,8 +126,55 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> loadSessions() async {
-    // TODO: Load from API
-    notifyListeners();
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final sessionsData = await _apiService.getSessions();
+      _sessions.clear();
+      
+      for (final sessionData in sessionsData) {
+        _sessions.add(ChatSession(
+          id: sessionData['id'],
+          userId: sessionData['user_id'],
+          title: sessionData['title'] ?? 'New Chat',
+          createdAt: DateTime.parse(sessionData['created_at']),
+          messages: [],
+        ));
+      }
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> sendFile(String filePath, String fileName) async {
+    if (_currentSession == null) {
+      await createSession();
+    }
+
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      await _apiService.uploadFile(
+        filePath: filePath,
+        sessionId: _currentSession!.id,
+      );
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   void selectSession(String sessionId) {

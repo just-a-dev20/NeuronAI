@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/message_model.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -99,15 +100,57 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _buildImage(BuildContext context) {
-    // TODO: Implement image display
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
+    final imageUrl = message.content;
+    
+    if (imageUrl.startsWith('http')) {
+      return ClipRRect(
         borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Icon(Icons.image, size: 48),
-    );
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          width: 250,
+          height: 200,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            width: 250,
+            height: 200,
+            color: Colors.grey[300],
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          errorWidget: (context, url, error) => Container(
+            width: 250,
+            height: 200,
+            color: Colors.grey[300],
+            child: const Center(
+              child: Icon(Icons.error, color: Colors.red),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.image, size: 24),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                imageUrl,
+                style: const TextStyle(fontSize: 12),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   IconData _getAgentIcon() {

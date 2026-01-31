@@ -45,6 +45,19 @@ class ApiService {
     return response.data;
   }
 
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    final response = await _dio.post('/api/v1/auth/login', data: {
+      'email': email,
+      'password': password,
+    });
+    return response.data;
+  }
+
+  Future<List<Map<String, dynamic>>> getSessions() async {
+    final response = await _dio.get('/api/v1/sessions');
+    return List<Map<String, dynamic>>.from(response.data);
+  }
+
   Future<Map<String, dynamic>> sendMessage({
     required String sessionId,
     required String content,

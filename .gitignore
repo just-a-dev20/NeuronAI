@@ -1,7 +1,7 @@
 # Dependencies
 backend/go/vendor/
 backend/python/.venv/
-backend/python/__pycache__/
+backend/python/**/__pycache__/
 backend/python/*.pyc
 backend/python/*.pyo
 backend/python/*.pyd

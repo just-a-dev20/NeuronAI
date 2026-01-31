@@ -95,3 +95,6 @@ Workflow:
 - Create a pull request using the GitHub CLI: `gh pr create --title "..." --body "..."`
 - Wait for review approval before merging
 - Never use `git push origin main` or similar direct pushes to protected branches
+
+
+And ALWAYS LOOK AT TODO.md for what needs to be done

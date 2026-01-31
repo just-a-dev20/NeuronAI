@@ -31,9 +31,46 @@ NeuronAI/
 - Python 3.11+
 - Flutter 3.16+
 - Docker & Docker Compose
-- Supabase account
+- Supabase account (optional - can use local database)
 
-### Environment Setup
+### One-Line Installer (Recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/yourusername/neuronai/main/install.sh | bash
+```
+
+**⚠️ Security Warning:** The installer script runs with full system access. For production deployments, download and review the script first:
+```bash
+curl -fsSL https://raw.githubusercontent.com/yourusername/neuronai/main/install.sh -o install.sh
+cat install.sh  # Review the script
+bash install.sh
+```
+
+### Self-Hosted Deployment
+
+The easiest way to get started is using Docker Compose with the self-hosted configuration:
+
+```bash
+git clone https://github.com/yourusername/neuronai.git  # Replace 'yourusername' with actual GitHub username
+cd neuronai/infra/docker
+
+# Copy and edit environment configuration
+cp .env.example .env
+# Edit .env with your settings
+
+# Deploy
+./scripts/deploy.sh
+```
+
+Services will be available at:
+- API Gateway: http://localhost:8080
+- MinIO Console: http://localhost:9001
+
+**⚠️ SECURITY WARNING: Default admin credentials (admin@neuronai.local / admin123) MUST be changed immediately after first login. These are insecure defaults for development only.**
+
+See [Self-Hosting Guide](infra/docker/SELFHOSTING.md) for detailed instructions.
+
+### Development Setup
 
 1. Clone the repository:
 ```bash
@@ -69,6 +106,13 @@ python main.py
 
 ### Docker (Recommended)
 
+**Self-Hosted (Full Stack):**
+```bash
+cd infra/docker
+./scripts/deploy.sh
+```
+
+**Development Only:**
 ```bash
 cd infra/docker
 docker-compose up -d
@@ -143,6 +187,7 @@ Comprehensive documentation is available in the [docs/](docs/) directory:
 - **[API Reference](docs/api.md)** - Complete REST, WebSocket, and gRPC documentation
 - **[Development Guide](docs/development.md)** - Setup, coding standards, and workflows
 - **[Deployment Guide](docs/deployment.md)** - Production deployment instructions
+- **[Self-Hosting Guide](infra/docker/SELFHOSTING.md)** - Self-hosted deployment with Docker
 - **[Backend](docs/backend.md)** - Go and Python service documentation
 - **[Frontend](docs/frontend.md)** - Flutter app documentation
 - **[Protocol Buffers](docs/protobuf.md)** - gRPC schema reference

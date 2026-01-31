@@ -6,6 +6,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 import structlog
 
+from neuronai.agents.llm_service import LLMService
+from neuronai.agents.prompt_templates import PromptTemplates, PromptTemplate
+
 logger = structlog.get_logger()
 
 
@@ -49,6 +52,7 @@ class SwarmOrchestrator:
     def __init__(self) -> None:
         self.agents: Dict[str, AgentState] = {}
         self.active_tasks: Dict[str, SwarmTask] = {}
+        self.llm_service = LLMService()
         self.logger = logger.bind(component="SwarmOrchestrator")
 
     async def process_message(
@@ -58,7 +62,7 @@ class SwarmOrchestrator:
         content: str,
         message_type: int = 1,  # TEXT
     ) -> Dict[str, Any]:
-        """Process a single message and return the result."""
+        """Process a single message and return result."""
         self.logger.info(
             "Processing message",
             session_id=session_id,
@@ -66,9 +70,15 @@ class SwarmOrchestrator:
             content_length=len(content),
         )
 
-        # Simple response for now - would integrate with actual LLM
+        # Use LLM service with prompt templates for response
+        system_prompt = PromptTemplates.build_system_prompt()
+        result = await self.llm_service.generate_response(
+            prompt=PromptTemplates.build_chat_prompt(content),
+            system_prompt=system_prompt,
+        )
+
         return {
-            "content": f"I received your message: {content[:100]}...",
+            "content": result.get("content", "I apologize, but I couldn't process your message."),
             "message_type": message_type,
             "agent_type": 1,  # ORCHESTRATOR
         }
@@ -80,34 +90,26 @@ class SwarmOrchestrator:
         content: str,
         message_type: int = 1,  # TEXT
     ) -> AsyncIterator[Dict[str, Any]]:
-        """Process a message and stream the response."""
+        """Process a message and stream response."""
         self.logger.info(
             "Processing stream",
             session_id=session_id,
             user_id=user_id,
         )
 
-        # Simulate streaming response
-        words = content.split()
-        response_parts = []
+        # Use LLM service for streaming response with prompt templates
+        system_prompt = PromptTemplates.build_system_prompt()
 
-        for i, word in enumerate(words[:20]):  # Limit to 20 words for demo
-            response_parts.append(word)
+        async for chunk in self.llm_service.generate_stream(
+            prompt=PromptTemplates.build_chat_prompt(content),
+            system_prompt=system_prompt,
+        ):
             yield {
-                "content": " ".join(response_parts),
+                "content": chunk.get("content", ""),
                 "message_type": message_type,
                 "agent_type": 1,  # ORCHESTRATOR
-                "is_final": False,
+                "is_final": chunk.get("is_final", False),
             }
-            await asyncio.sleep(0.1)  # Simulate processing time
-
-        # Final response
-        yield {
-            "content": f"Processed your message with {len(words)} words.",
-            "message_type": message_type,
-            "agent_type": 1,  # ORCHESTRATOR
-            "is_final": True,
-        }
 
     async def execute_swarm_task(self, task: SwarmTask) -> AsyncIterator[Dict[str, Any]]:
         """Execute a complex task using multiple agents."""

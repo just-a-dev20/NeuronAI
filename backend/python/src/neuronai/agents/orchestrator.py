@@ -43,7 +43,7 @@ class SwarmTask:
     task_id: str
     session_id: str
     description: str
-    required_agents: list
+    required_agents: list[str]
     context: dict[str, Any] = field(default_factory=dict)
     status: str = "pending"
 

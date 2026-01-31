@@ -25,7 +25,7 @@ Go Tooling: gofmt, goimports, go test.
 
 Flutter Tooling: flutter analyze, dart format.
 
-2. Language Standards
+1. Language Standards
 Golang
 Idiom: Adhere strictly to "Effective Go." Use standard library packages primarily.
 
@@ -51,12 +51,12 @@ Logic: Android (Mobile) and Linux (Desktop).
 
 UI/UX: Responsive layouts handling Linux desktop resizing, Android aspect ratios, and iPad touch targets.
 
-3. Integration & Consistency
+1. Integration & Consistency
 API Contracts: Backend changes (Go/Python) must immediately reflect in Flutter data models (JSON keys).
 
 Architectural Integrity: Do not introduce patterns that conflict with the established project structure.
 
-4. Agentic Workflow: Automated CodeRabbit Review
+1. Agentic Workflow: Automated CodeRabbit Review
 When instructed to perform a review loop, execute the following strict protocol:
 
 Execution: Run the CodeRabbit CLI:
@@ -83,7 +83,7 @@ Max Limit: 3 iterations.
 
 Reporting: Conclude by summarizing outcomes, applied fixes, and remaining issues to the user.
 
-5. Git Workflow & Branching Strategy
+1. Git Workflow & Branching Strategy
 Pull Requests Required: ALWAYS create a pull request for any code changes. NEVER push directly to the main or master branch.
 
 Branch Naming: Use descriptive branch names following the pattern: `feature/description`, `fix/description`, `refactor/description`, or `docs/description`.

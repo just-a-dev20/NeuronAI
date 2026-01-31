@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package neuronai;
+
+option go_package = "github.com/neuronai/backend/go/internal/grpc/pb";
+
+import "google/protobuf/timestamp.proto";
+
+// Agent message types
+enum AgentType {
+  AGENT_TYPE_UNSPECIFIED = 0;
+  AGENT_TYPE_ORCHESTRATOR = 1;
+  AGENT_TYPE_RESEARCHER = 2;
+  AGENT_TYPE_WRITER = 3;
+  AGENT_TYPE_CODE = 4;
+  AGENT_TYPE_IMAGE = 5;
+  AGENT_TYPE_VIDEO = 6;
+}
+
+enum MessageType {
+  MESSAGE_TYPE_UNSPECIFIED = 0;
+  MESSAGE_TYPE_TEXT = 1;
+  MESSAGE_TYPE_IMAGE = 2;
+  MESSAGE_TYPE_VIDEO = 3;
+  MESSAGE_TYPE_CODE = 4;
+  MESSAGE_TYPE_TOOL_CALL = 5;
+  MESSAGE_TYPE_TOOL_RESULT = 6;
+}
+
+enum TaskStatus {
+  TASK_STATUS_UNSPECIFIED = 0;
+  TASK_STATUS_PENDING = 1;
+  TASK_STATUS_IN_PROGRESS = 2;
+  TASK_STATUS_COMPLETED = 3;
+  TASK_STATUS_FAILED = 4;
+  TASK_STATUS_CANCELLED = 5;
+}
+
+// Request/Response messages
+message ChatRequest {
+  string session_id = 1;
+  string user_id = 2;
+  string content = 3;
+  MessageType message_type = 4;
+  repeated Attachment attachments = 5;
+  map<string, string> metadata = 6;
+}
+
+message ChatResponse {
+  string message_id = 1;
+  string session_id = 2;
+  string content = 3;
+  MessageType message_type = 4;
+  AgentType agent_type = 5;
+  TaskStatus status = 6;
+  google.protobuf.Timestamp timestamp = 7;
+  bool is_final = 8;
+  repeated ToolCall tool_calls = 9;
+}
+
+message Attachment {
+  string id = 1;
+  string filename = 2;
+  string mime_type = 3;
+  bytes data = 4;
+  string url = 5;
+}
+
+message ToolCall {
+  string id = 1;
+  string name = 2;
+  string arguments = 3;
+  string result = 4;
+}
+
+// Swarm orchestration
+message SwarmTask {
+  string task_id = 1;
+  string session_id = 2;
+  string description = 3;
+  repeated string required_agents = 4;
+  map<string, string> context = 5;
+  TaskStatus status = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message SwarmState {
+  string session_id = 1;
+  repeated AgentState agents = 2;
+  SwarmTask current_task = 3;
+  map<string, string> shared_context = 4;
+}
+
+message AgentState {
+  string agent_id = 1;
+  AgentType agent_type = 2;
+  string status = 3;
+  string current_task = 4;
+  map<string, string> memory = 5;
+}
+
+// Streaming
+message StreamRequest {
+  string session_id = 1;
+  string user_id = 2;
+  oneof payload {
+    ChatRequest chat = 3;
+    bytes audio_data = 4;
+  }
+}
+
+message StreamResponse {
+  string session_id = 1;
+  oneof payload {
+    ChatResponse chat = 2;
+    bytes audio_data = 3;
+    SwarmState swarm_update = 4;
+  }
+  bool is_heartbeat = 5;
+}
+
+// Services
+service AIService {
+  rpc ProcessChat(ChatRequest) returns (ChatResponse);
+  rpc ProcessStream(stream StreamRequest) returns (stream StreamResponse);
+  rpc ExecuteSwarmTask(SwarmTask) returns (stream SwarmState);
+}
+
+message GetSwarmStateRequest {
+  string session_id = 1;
+}
+
+service SwarmOrchestrator {
+  rpc RegisterAgent(AgentState) returns (AgentState);
+  rpc UpdateSwarmState(SwarmState) returns (SwarmState);
+  rpc GetSwarmState(GetSwarmStateRequest) returns (SwarmState);
+}

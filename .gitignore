@@ -1,0 +1,62 @@
+# Dependencies
+backend/go/vendor/
+backend/python/.venv/
+backend/python/__pycache__/
+backend/python/*.pyc
+backend/python/*.pyo
+backend/python/*.pyd
+backend/python/.Python
+backend/python/*.egg-info/
+backend/python/dist/
+backend/python/build/
+
+# Flutter
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.packages
+frontend/build/
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/android/.gradle/
+frontend/android/app/debug/
+frontend/android/app/profile/
+frontend/android/app/release/
+frontend/linux/flutter/
+frontend/macos/Flutter/
+frontend/windows/flutter/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+*.cover
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Docker
+infra/docker/data/
+
+# Documentation build
+docs/_build/
+
+# Temporary files
+tmp/
+temp/
+*.tmp

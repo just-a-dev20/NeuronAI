@@ -1,0 +1,49 @@
+[project]
+name = "neuronai"
+version = "0.1.0"
+description = "NeuronAI Python Backend Service"
+requires-python = ">=3.11"
+dependencies = [
+    "grpcio>=1.60.0",
+    "grpcio-tools>=1.60.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "python-jose[cryptography]>=3.3.0",
+    "langchain>=0.1.0",
+    "langchain-openai>=0.0.5",
+    "llama-index>=0.9.0",
+    "supabase>=2.3.0",
+    "python-dotenv>=1.0.0",
+    "structlog>=24.1.0",
+    "uvicorn>=0.25.0",
+    "fastapi>=0.109.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true

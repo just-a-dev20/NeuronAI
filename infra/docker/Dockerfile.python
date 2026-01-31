@@ -1,0 +1,34 @@
+# Multi-stage build for Python service
+FROM python:3.11-slim AS python-builder
+
+WORKDIR /app
+
+# Install uv
+RUN pip install uv
+
+# Copy dependency files
+COPY backend/python/pyproject.toml backend/python/uv.lock* ./
+
+# Install dependencies
+RUN uv pip install --system -e .
+
+# Copy source code
+COPY backend/python/ .
+
+# Final stage
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy installed packages from builder
+COPY --from=python-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=python-builder /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY backend/python/ .
+
+# Expose port
+EXPOSE 50051
+
+# Run the application
+CMD ["python", "main.py"]

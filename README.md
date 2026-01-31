@@ -39,7 +39,6 @@ NeuronAI/
 curl -fsSL https://raw.githubusercontent.com/yourusername/neuronai/main/install.sh | bash
 ```
 
-**⚠️ Security Warning:** The installer script runs with full system access. For production deployments, download and review the script first:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/yourusername/neuronai/main/install.sh -o install.sh
 cat install.sh  # Review the script

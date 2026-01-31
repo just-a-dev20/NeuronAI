@@ -5,11 +5,17 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # Go Backend Tests
   go-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: ./backend/go
@@ -21,14 +27,8 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: '1.22'
-    
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
+        cache: true
+        cache-dependency-path: backend/go/go.sum
     
     - name: Download dependencies
       run: go mod download
@@ -49,10 +49,19 @@ jobs:
     
     - name: Build
       run: go build -v ./cmd/gateway
+    
+    - name: Upload coverage
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: go-coverage
+        path: ./backend/go/coverage.out
+        retention-days: 7
 
   # Python Backend Tests
   python-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: ./backend/python
@@ -69,10 +78,12 @@ jobs:
       run: pip install uv
     
     - name: Cache dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/uv
-        key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml') }}
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml', '**/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
     
     - name: Install dependencies
       run: uv pip install --system -e ".[dev]"
@@ -84,14 +95,23 @@ jobs:
       run: ruff format --check .
     
     - name: Run mypy
-      run: mypy src/
+      run: mypy src/neuronai
     
     - name: Run tests
       run: pytest --cov=src/neuronai --cov-report=xml
+    
+    - name: Upload coverage
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: python-coverage
+        path: ./backend/python/coverage.xml
+        retention-days: 7
 
   # Flutter Tests
   flutter-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: ./frontend
@@ -102,17 +122,15 @@ jobs:
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.16.0'
+        flutter-version: '3.38.6'
         channel: 'stable'
-    
-    - name: Cache Flutter dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.pub-cache
-        key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+        cache: true
     
     - name: Get dependencies
       run: flutter pub get
+    
+    - name: Check dart format
+      run: dart format --output=none --set-exit-if-changed .
     
     - name: Analyze
       run: flutter analyze
@@ -126,6 +144,7 @@ jobs:
   # Docker Build
   docker-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [go-tests, python-tests]
     
     steps:

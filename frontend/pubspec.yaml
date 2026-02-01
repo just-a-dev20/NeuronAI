@@ -20,7 +20,7 @@ dependencies:
   
   # UI Components
   flutter_markdown: ^0.6.18
-  flutter_syntax_highlighter: ^0.0.2
+  flutter_syntax_highlighter: ^0.2.1
   cached_network_image: ^3.3.1
   shimmer: ^3.0.0
   

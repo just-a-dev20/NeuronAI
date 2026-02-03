@@ -61,7 +61,6 @@ strict = true
 warn_return_any = true
 warn_unused_ignores = true
 exclude = [
-    # Exclude gRPC module - contains generated protobuf files with typing issues
-    # and server.py which depends on those generated types
-    "src/neuronai/grpc/",
+    # Exclude generated protobuf files only.
+    "^src/neuronai/grpc/(neuronai_pb2|neuronai_pb2_grpc)\\.py$",
 ]

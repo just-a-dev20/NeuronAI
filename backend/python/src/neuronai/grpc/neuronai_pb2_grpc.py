@@ -2,31 +2,31 @@
 """Client and server classes corresponding to protobuf-defined services."""
 
 import grpc
-import neuronai_pb2 as neuronai__pb2
+from . import neuronai_pb2 as neuronai__pb2
 
-GRPC_GENERATED_VERSION = '1.76.0'
+GRPC_GENERATED_VERSION = "1.76.0"
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
 try:
     from grpc._utilities import first_version_is_lower
+
     _version_not_supported = first_version_is_lower(GRPC_VERSION, GRPC_GENERATED_VERSION)
 except ImportError:
     _version_not_supported = True
 
 if _version_not_supported:
     raise RuntimeError(
-        f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in neuronai_pb2_grpc.py depends on'
-        + f' grpcio>={GRPC_GENERATED_VERSION}.'
-        + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
-        + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
+        f"The grpc package installed is at version {GRPC_VERSION},"
+        + " but the generated code in neuronai_pb2_grpc.py depends on"
+        + f" grpcio>={GRPC_GENERATED_VERSION}."
+        + f" Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}"
+        + f" or downgrade your generated code using grpcio-tools<={GRPC_VERSION}."
     )
 
 
 class AIServiceStub:
-    """Services
-    """
+    """Services"""
 
     def __init__(self, channel):
         """Constructor.
@@ -35,89 +35,93 @@ class AIServiceStub:
             channel: A grpc.Channel.
         """
         self.ProcessChat = channel.unary_unary(
-                '/neuronai.AIService/ProcessChat',
-                request_serializer=neuronai__pb2.ChatRequest.SerializeToString,
-                response_deserializer=neuronai__pb2.ChatResponse.FromString,
-                _registered_method=True)
+            "/neuronai.AIService/ProcessChat",
+            request_serializer=neuronai__pb2.ChatRequest.SerializeToString,
+            response_deserializer=neuronai__pb2.ChatResponse.FromString,
+            _registered_method=True,
+        )
         self.ProcessStream = channel.stream_stream(
-                '/neuronai.AIService/ProcessStream',
-                request_serializer=neuronai__pb2.StreamRequest.SerializeToString,
-                response_deserializer=neuronai__pb2.StreamResponse.FromString,
-                _registered_method=True)
+            "/neuronai.AIService/ProcessStream",
+            request_serializer=neuronai__pb2.StreamRequest.SerializeToString,
+            response_deserializer=neuronai__pb2.StreamResponse.FromString,
+            _registered_method=True,
+        )
         self.ExecuteSwarmTask = channel.unary_stream(
-                '/neuronai.AIService/ExecuteSwarmTask',
-                request_serializer=neuronai__pb2.SwarmTask.SerializeToString,
-                response_deserializer=neuronai__pb2.SwarmState.FromString,
-                _registered_method=True)
+            "/neuronai.AIService/ExecuteSwarmTask",
+            request_serializer=neuronai__pb2.SwarmTask.SerializeToString,
+            response_deserializer=neuronai__pb2.SwarmState.FromString,
+            _registered_method=True,
+        )
 
 
 class AIServiceServicer:
-    """Services
-    """
+    """Services"""
 
     def ProcessChat(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def ProcessStream(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def ExecuteSwarmTask(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
 
 def add_AIServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'ProcessChat': grpc.unary_unary_rpc_method_handler(
-                    servicer.ProcessChat,
-                    request_deserializer=neuronai__pb2.ChatRequest.FromString,
-                    response_serializer=neuronai__pb2.ChatResponse.SerializeToString,
-            ),
-            'ProcessStream': grpc.stream_stream_rpc_method_handler(
-                    servicer.ProcessStream,
-                    request_deserializer=neuronai__pb2.StreamRequest.FromString,
-                    response_serializer=neuronai__pb2.StreamResponse.SerializeToString,
-            ),
-            'ExecuteSwarmTask': grpc.unary_stream_rpc_method_handler(
-                    servicer.ExecuteSwarmTask,
-                    request_deserializer=neuronai__pb2.SwarmTask.FromString,
-                    response_serializer=neuronai__pb2.SwarmState.SerializeToString,
-            ),
+        "ProcessChat": grpc.unary_unary_rpc_method_handler(
+            servicer.ProcessChat,
+            request_deserializer=neuronai__pb2.ChatRequest.FromString,
+            response_serializer=neuronai__pb2.ChatResponse.SerializeToString,
+        ),
+        "ProcessStream": grpc.stream_stream_rpc_method_handler(
+            servicer.ProcessStream,
+            request_deserializer=neuronai__pb2.StreamRequest.FromString,
+            response_serializer=neuronai__pb2.StreamResponse.SerializeToString,
+        ),
+        "ExecuteSwarmTask": grpc.unary_stream_rpc_method_handler(
+            servicer.ExecuteSwarmTask,
+            request_deserializer=neuronai__pb2.SwarmTask.FromString,
+            response_serializer=neuronai__pb2.SwarmState.SerializeToString,
+        ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'neuronai.AIService', rpc_method_handlers)
+        "neuronai.AIService", rpc_method_handlers
+    )
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('neuronai.AIService', rpc_method_handlers)
+    server.add_registered_method_handlers("neuronai.AIService", rpc_method_handlers)
 
 
- # This class is part of an EXPERIMENTAL API.
+# This class is part of an EXPERIMENTAL API.
 class AIService:
-    """Services
-    """
+    """Services"""
 
     @staticmethod
-    def ProcessChat(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
+    def ProcessChat(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/neuronai.AIService/ProcessChat',
+            "/neuronai.AIService/ProcessChat",
             neuronai__pb2.ChatRequest.SerializeToString,
             neuronai__pb2.ChatResponse.FromString,
             options,
@@ -128,23 +132,26 @@ class AIService:
             wait_for_ready,
             timeout,
             metadata,
-            _registered_method=True)
+            _registered_method=True,
+        )
 
     @staticmethod
-    def ProcessStream(request_iterator,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
+    def ProcessStream(
+        request_iterator,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.stream_stream(
             request_iterator,
             target,
-            '/neuronai.AIService/ProcessStream',
+            "/neuronai.AIService/ProcessStream",
             neuronai__pb2.StreamRequest.SerializeToString,
             neuronai__pb2.StreamResponse.FromString,
             options,
@@ -155,23 +162,26 @@ class AIService:
             wait_for_ready,
             timeout,
             metadata,
-            _registered_method=True)
+            _registered_method=True,
+        )
 
     @staticmethod
-    def ExecuteSwarmTask(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
+    def ExecuteSwarmTask(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.unary_stream(
             request,
             target,
-            '/neuronai.AIService/ExecuteSwarmTask',
+            "/neuronai.AIService/ExecuteSwarmTask",
             neuronai__pb2.SwarmTask.SerializeToString,
             neuronai__pb2.SwarmState.FromString,
             options,
@@ -182,7 +192,8 @@ class AIService:
             wait_for_ready,
             timeout,
             metadata,
-            _registered_method=True)
+            _registered_method=True,
+        )
 
 
 class SwarmOrchestratorStub:
@@ -195,20 +206,23 @@ class SwarmOrchestratorStub:
             channel: A grpc.Channel.
         """
         self.RegisterAgent = channel.unary_unary(
-                '/neuronai.SwarmOrchestrator/RegisterAgent',
-                request_serializer=neuronai__pb2.AgentState.SerializeToString,
-                response_deserializer=neuronai__pb2.AgentState.FromString,
-                _registered_method=True)
+            "/neuronai.SwarmOrchestrator/RegisterAgent",
+            request_serializer=neuronai__pb2.AgentState.SerializeToString,
+            response_deserializer=neuronai__pb2.AgentState.FromString,
+            _registered_method=True,
+        )
         self.UpdateSwarmState = channel.unary_unary(
-                '/neuronai.SwarmOrchestrator/UpdateSwarmState',
-                request_serializer=neuronai__pb2.SwarmState.SerializeToString,
-                response_deserializer=neuronai__pb2.SwarmState.FromString,
-                _registered_method=True)
+            "/neuronai.SwarmOrchestrator/UpdateSwarmState",
+            request_serializer=neuronai__pb2.SwarmState.SerializeToString,
+            response_deserializer=neuronai__pb2.SwarmState.FromString,
+            _registered_method=True,
+        )
         self.GetSwarmState = channel.unary_unary(
-                '/neuronai.SwarmOrchestrator/GetSwarmState',
-                request_serializer=neuronai__pb2.GetSwarmStateRequest.SerializeToString,
-                response_deserializer=neuronai__pb2.SwarmState.FromString,
-                _registered_method=True)
+            "/neuronai.SwarmOrchestrator/GetSwarmState",
+            request_serializer=neuronai__pb2.GetSwarmStateRequest.SerializeToString,
+            response_deserializer=neuronai__pb2.SwarmState.FromString,
+            _registered_method=True,
+        )
 
 
 class SwarmOrchestratorServicer:
@@ -217,65 +231,68 @@ class SwarmOrchestratorServicer:
     def RegisterAgent(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def UpdateSwarmState(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def GetSwarmState(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
 
 def add_SwarmOrchestratorServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'RegisterAgent': grpc.unary_unary_rpc_method_handler(
-                    servicer.RegisterAgent,
-                    request_deserializer=neuronai__pb2.AgentState.FromString,
-                    response_serializer=neuronai__pb2.AgentState.SerializeToString,
-            ),
-            'UpdateSwarmState': grpc.unary_unary_rpc_method_handler(
-                    servicer.UpdateSwarmState,
-                    request_deserializer=neuronai__pb2.SwarmState.FromString,
-                    response_serializer=neuronai__pb2.SwarmState.SerializeToString,
-            ),
-            'GetSwarmState': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetSwarmState,
-                    request_deserializer=neuronai__pb2.GetSwarmStateRequest.FromString,
-                    response_serializer=neuronai__pb2.SwarmState.SerializeToString,
-            ),
+        "RegisterAgent": grpc.unary_unary_rpc_method_handler(
+            servicer.RegisterAgent,
+            request_deserializer=neuronai__pb2.AgentState.FromString,
+            response_serializer=neuronai__pb2.AgentState.SerializeToString,
+        ),
+        "UpdateSwarmState": grpc.unary_unary_rpc_method_handler(
+            servicer.UpdateSwarmState,
+            request_deserializer=neuronai__pb2.SwarmState.FromString,
+            response_serializer=neuronai__pb2.SwarmState.SerializeToString,
+        ),
+        "GetSwarmState": grpc.unary_unary_rpc_method_handler(
+            servicer.GetSwarmState,
+            request_deserializer=neuronai__pb2.GetSwarmStateRequest.FromString,
+            response_serializer=neuronai__pb2.SwarmState.SerializeToString,
+        ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'neuronai.SwarmOrchestrator', rpc_method_handlers)
+        "neuronai.SwarmOrchestrator", rpc_method_handlers
+    )
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('neuronai.SwarmOrchestrator', rpc_method_handlers)
+    server.add_registered_method_handlers("neuronai.SwarmOrchestrator", rpc_method_handlers)
 
 
- # This class is part of an EXPERIMENTAL API.
+# This class is part of an EXPERIMENTAL API.
 class SwarmOrchestrator:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def RegisterAgent(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
+    def RegisterAgent(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/neuronai.SwarmOrchestrator/RegisterAgent',
+            "/neuronai.SwarmOrchestrator/RegisterAgent",
             neuronai__pb2.AgentState.SerializeToString,
             neuronai__pb2.AgentState.FromString,
             options,
@@ -286,23 +303,26 @@ class SwarmOrchestrator:
             wait_for_ready,
             timeout,
             metadata,
-            _registered_method=True)
+            _registered_method=True,
+        )
 
     @staticmethod
-    def UpdateSwarmState(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
+    def UpdateSwarmState(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/neuronai.SwarmOrchestrator/UpdateSwarmState',
+            "/neuronai.SwarmOrchestrator/UpdateSwarmState",
             neuronai__pb2.SwarmState.SerializeToString,
             neuronai__pb2.SwarmState.FromString,
             options,
@@ -313,23 +333,26 @@ class SwarmOrchestrator:
             wait_for_ready,
             timeout,
             metadata,
-            _registered_method=True)
+            _registered_method=True,
+        )
 
     @staticmethod
-    def GetSwarmState(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
+    def GetSwarmState(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/neuronai.SwarmOrchestrator/GetSwarmState',
+            "/neuronai.SwarmOrchestrator/GetSwarmState",
             neuronai__pb2.GetSwarmStateRequest.SerializeToString,
             neuronai__pb2.SwarmState.FromString,
             options,
@@ -340,4 +363,5 @@ class SwarmOrchestrator:
             wait_for_ready,
             timeout,
             metadata,
-            _registered_method=True)
+            _registered_method=True,
+        )

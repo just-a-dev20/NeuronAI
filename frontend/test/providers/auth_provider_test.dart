@@ -43,9 +43,10 @@ class MockApiService implements ApiService {
   }
 
   @override
-  Future<String> uploadFile({
+  Future<void> uploadFile({
     required String filePath,
     required String sessionId,
+    Function(int, int)? onProgress,
   }) async {
     throw UnimplementedError();
   }

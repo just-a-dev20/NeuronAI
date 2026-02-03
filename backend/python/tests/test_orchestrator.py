@@ -1,5 +1,7 @@
 """Tests for the swarm orchestrator."""
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from neuronai.agents.orchestrator import (
@@ -14,6 +16,28 @@ from neuronai.agents.orchestrator import (
 def orchestrator():
     """Create a swarm orchestrator instance."""
     return SwarmOrchestrator()
+
+
+@pytest.fixture
+def mock_llm_service():
+    """Create a mock LLM service for testing."""
+    with patch("neuronai.agents.orchestrator.LLMService") as mock_service:
+        instance = MagicMock()
+        instance.generate_response = AsyncMock(
+            return_value={
+                "content": "I received your message: Hello, world!...",
+                "model": "gpt-4",
+            }
+        )
+        instance.generate_stream = AsyncMock(
+            return_value=[
+                {"content": "I ", "is_final": False},
+                {"content": "I received ", "is_final": False},
+                {"content": "I received your message: Hello, world!...", "is_final": True},
+            ]
+        )
+        mock_service.return_value = instance
+        yield mock_service
 
 
 @pytest.fixture
@@ -37,7 +61,7 @@ class TestSwarmOrchestrator:
         assert orchestrator.logger is not None
 
     @pytest.mark.asyncio
-    async def test_process_message(self, orchestrator):
+    async def test_process_message(self, orchestrator, mock_llm_service):
         """Test processing a single message."""
         result = await orchestrator.process_message(
             session_id="session-123",
@@ -66,7 +90,7 @@ class TestSwarmOrchestrator:
         assert len(result["content"]) <= 200  # Should be truncated
 
     @pytest.mark.asyncio
-    async def test_process_stream(self, orchestrator):
+    async def test_process_stream(self, orchestrator, mock_llm_service):
         """Test streaming response."""
         content = "Test streaming message with multiple words here"
 

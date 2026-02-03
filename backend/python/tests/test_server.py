@@ -1,6 +1,7 @@
 """Tests for gRPC server."""
 
 import asyncio
+from collections.abc import AsyncIterator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import grpc
@@ -9,6 +10,34 @@ import pytest
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from neuronai.grpc.server import AIServiceServicer, serve
+
+
+@pytest.fixture
+def mock_llm_service():
+    """Create a mock LLM service for testing."""
+    with patch("neuronai.agents.orchestrator.LLMService") as mock_service:
+        instance = MagicMock()
+        instance.generate_response = AsyncMock(
+            return_value={
+                "content": "I received your message: Hello, world!...",
+                "model": "gpt-4",
+            }
+        )
+        instance.generate_stream = AsyncMock(
+            return_value=[
+                {"content": "I ", "is_final": False},
+                {"content": "I received ", "is_final": False},
+                {"content": "I received your message: Hello, world!...", "is_final": True},
+            ]
+        )
+        mock_service.return_value = instance
+        yield mock_service
+
+
+async def _async_iterator(items: list) -> AsyncIterator:
+    """Convert a list to an async iterator for testing."""
+    for item in items:
+        yield item
 
 
 @pytest.fixture
@@ -52,7 +81,7 @@ class TestAIServiceServicer:
         assert servicer.logger is not None
 
     @pytest.mark.asyncio
-    async def test_process_chat_basic(self, servicer, mock_chat_request):
+    async def test_process_chat_basic(self, servicer, mock_chat_request, mock_llm_service):
         """Test basic chat processing."""
         context = MagicMock(spec=grpc.aio.ServicerContext)
 
@@ -107,7 +136,9 @@ class TestAIServiceServicer:
         context = MagicMock(spec=grpc.aio.ServicerContext)
 
         responses = []
-        async for response in servicer.ProcessStream(iter([mock_stream_request]), context):
+        async for response in servicer.ProcessStream(
+            _async_iterator([mock_stream_request]), context
+        ):
             responses.append(response)
 
         assert len(responses) > 0
@@ -136,7 +167,7 @@ class TestAIServiceServicer:
             requests.append(stream_req)
 
         responses = []
-        async for response in servicer.ProcessStream(iter(requests), context):
+        async for response in servicer.ProcessStream(_async_iterator(requests), context):
             responses.append(response)
 
         assert len(responses) > 0
@@ -150,7 +181,9 @@ class TestAIServiceServicer:
             servicer.orchestrator, "process_stream", side_effect=Exception("Test error")
         ):
             responses = []
-            async for response in servicer.ProcessStream(iter([mock_stream_request]), context):
+            async for response in servicer.ProcessStream(
+                _async_iterator([mock_stream_request]), context
+            ):
                 responses.append(response)
 
             assert len(responses) > 0
@@ -220,12 +253,14 @@ class TestIntegration:
         assert response.is_final is True
 
     @pytest.mark.asyncio
-    async def test_full_stream_flow(self, servicer, mock_stream_request):
+    async def test_full_stream_flow(self, servicer, mock_stream_request, mock_llm_service):
         """Test complete stream flow from request to responses."""
         context = MagicMock(spec=grpc.aio.ServicerContext)
 
         responses = []
-        async for response in servicer.ProcessStream(iter([mock_stream_request]), context):
+        async for response in servicer.ProcessStream(
+            _async_iterator([mock_stream_request]), context
+        ):
             responses.append(response)
 
         assert len(responses) > 0

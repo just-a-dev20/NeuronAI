@@ -4,31 +4,11 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'message_model.freezed.dart';
 part 'message_model.g.dart';
 
-enum MessageType {
-  text,
-  image,
-  video,
-  code,
-  toolCall,
-  toolResult,
-}
+enum MessageType { text, image, video, code, toolCall, toolResult }
 
-enum AgentType {
-  orchestrator,
-  researcher,
-  writer,
-  code,
-  image,
-  video,
-}
+enum AgentType { orchestrator, researcher, writer, code, image, video }
 
-enum TaskStatus {
-  pending,
-  inProgress,
-  completed,
-  failed,
-  cancelled,
-}
+enum TaskStatus { pending, inProgress, completed, failed, cancelled }
 
 @freezed
 class Message with _$Message {

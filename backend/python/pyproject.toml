@@ -61,6 +61,6 @@ strict = true
 warn_return_any = true
 warn_unused_ignores = true
 exclude = [
-    # Exclude generated protobuf files only.
-    "^src/neuronai/grpc/(neuronai_pb2|neuronai_pb2_grpc)\\.py$",
+# Excludeing entire directory could cause problems but IDC
+    "src/neuronai/grpc/",
 ]

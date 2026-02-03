@@ -6,6 +6,7 @@ from typing import Any
 
 import structlog
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 
 from neuronai.config.settings import get_settings
 
@@ -68,7 +69,7 @@ class LLMService:
             }
 
         try:
-            messages = []
+            messages: list[ChatCompletionMessageParam] = []
 
             if system_prompt:
                 messages.append({"role": "system", "content": system_prompt})
@@ -89,17 +90,18 @@ class LLMService:
             )
 
             content = response.choices[0].message.content
+            tokens_used = response.usage.total_tokens if response.usage else 0
 
             self.logger.info(
                 "Generated LLM response",
-                tokens_used=response.usage.total_tokens,
+                tokens_used=tokens_used,
                 model=response.model,
             )
 
             return {
                 "content": content,
                 "model": response.model,
-                "tokens_used": response.usage.total_tokens,
+                "tokens_used": tokens_used,
                 "finish_reason": response.choices[0].finish_reason,
             }
 
@@ -140,7 +142,7 @@ class LLMService:
             return
 
         try:
-            messages = []
+            messages: list[ChatCompletionMessageParam] = []
 
             if system_prompt:
                 messages.append({"role": "system", "content": system_prompt})

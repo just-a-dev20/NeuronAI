@@ -2,9 +2,9 @@
 set -e
 
 # NeuronAI One-Line Installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/yourusername/neuronai/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/just-a-dev20/NeuronAI/main/install.sh | bash
 
-REPO_URL="${REPO_URL:-https://github.com/yourusername/neuronai.git}"  # Replace with actual repository URL
+REPO_URL="${REPO_URL:-https://github.com/just-a-dev20/NeuronAI.git}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/neuronai}"
 
 echo "=========================================="

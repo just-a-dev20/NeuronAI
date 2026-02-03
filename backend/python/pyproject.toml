@@ -28,6 +28,8 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.7.0",
     "types-python-jose>=3.3.0",
+    "types-grpcio>=1.60.0",
+    "types-protobuf>=4.24.0",
 ]
 
 [build-system]
@@ -58,3 +60,8 @@ python_version = "3.11"
 strict = true
 warn_return_any = true
 warn_unused_ignores = true
+exclude = [
+    # Exclude gRPC module - contains generated protobuf files with typing issues
+    # and server.py which depends on those generated types
+    "src/neuronai/grpc/",
+]

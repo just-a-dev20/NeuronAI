@@ -7,6 +7,7 @@ from concurrent import futures
 
 import grpc
 import structlog
+from google.protobuf.timestamp_pb2 import Timestamp
 from grpc import aio
 
 from neuronai.agents.orchestrator import SwarmOrchestrator
@@ -123,10 +124,8 @@ class AIServiceServicer(neuronai_pb2_grpc.AIServiceServicer):
                     ),
                 )
 
-    def _get_timestamp(self):
+    def _get_timestamp(self) -> Timestamp:
         """Get current timestamp in protobuf format."""
-        from google.protobuf.timestamp_pb2 import Timestamp
-
         timestamp = Timestamp()
         timestamp.GetCurrentTime()
         return timestamp

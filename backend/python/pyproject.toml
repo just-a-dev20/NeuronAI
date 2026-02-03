@@ -28,7 +28,7 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.7.0",
     "types-python-jose>=3.3.0",
-    "types-grpcio>=1.60.0",
+    "grpc-stubs>=1.53.0",
     "types-protobuf>=4.24.0",
 ]
 

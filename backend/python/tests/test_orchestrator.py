@@ -13,9 +13,16 @@ from neuronai.agents.orchestrator import (
 
 
 @pytest.fixture
-def orchestrator():
-    """Create a swarm orchestrator instance."""
+def orchestrator(mock_llm_service):
+    """Create a swarm orchestrator instance with mocked LLM."""
     return SwarmOrchestrator()
+
+
+async def _async_stream_chunks():
+    """Async generator for stream chunks."""
+    yield {"content": "I ", "is_final": False}
+    yield {"content": "I received ", "is_final": False}
+    yield {"content": "I received your message: Hello, world!...", "is_final": True}
 
 
 @pytest.fixture
@@ -29,13 +36,7 @@ def mock_llm_service():
                 "model": "gpt-4",
             }
         )
-        instance.generate_stream = AsyncMock(
-            return_value=[
-                {"content": "I ", "is_final": False},
-                {"content": "I received ", "is_final": False},
-                {"content": "I received your message: Hello, world!...", "is_final": True},
-            ]
-        )
+        instance.generate_stream = MagicMock(return_value=_async_stream_chunks())
         mock_service.return_value = instance
         yield mock_service
 

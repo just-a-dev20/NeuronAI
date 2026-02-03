@@ -12,6 +12,13 @@ from google.protobuf.timestamp_pb2 import Timestamp
 from neuronai.grpc.server import AIServiceServicer, serve
 
 
+async def _async_stream_chunks():
+    """Async generator for stream chunks."""
+    yield {"content": "I ", "is_final": False}
+    yield {"content": "I received ", "is_final": False}
+    yield {"content": "I received your message: Hello, world!...", "is_final": True}
+
+
 @pytest.fixture
 def mock_llm_service():
     """Create a mock LLM service for testing."""
@@ -23,13 +30,7 @@ def mock_llm_service():
                 "model": "gpt-4",
             }
         )
-        instance.generate_stream = AsyncMock(
-            return_value=[
-                {"content": "I ", "is_final": False},
-                {"content": "I received ", "is_final": False},
-                {"content": "I received your message: Hello, world!...", "is_final": True},
-            ]
-        )
+        instance.generate_stream = MagicMock(return_value=_async_stream_chunks())
         mock_service.return_value = instance
         yield mock_service
 
@@ -41,8 +42,8 @@ async def _async_iterator(items: list) -> AsyncIterator:
 
 
 @pytest.fixture
-def servicer():
-    """Create an AI service servicer instance."""
+def servicer(mock_llm_service):
+    """Create an AI service servicer instance with mocked LLM."""
     return AIServiceServicer()
 
 

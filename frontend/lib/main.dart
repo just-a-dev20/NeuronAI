@@ -21,16 +21,11 @@ class NeuronAIApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<ApiService>(
-          create: (_) => ApiService(),
-        ),
-        Provider<WebSocketService>(
-          create: (_) => WebSocketService(),
-        ),
+        Provider<ApiService>(create: (_) => ApiService()),
+        Provider<WebSocketService>(create: (_) => WebSocketService()),
         ChangeNotifierProvider<AuthProvider>(
-          create: (context) => AuthProvider(
-            apiService: context.read<ApiService>(),
-          ),
+          create: (context) =>
+              AuthProvider(apiService: context.read<ApiService>()),
         ),
         ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
           create: (context) => ChatProvider(
@@ -81,15 +76,11 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, auth, child) {
         if (auth.isLoading) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        return auth.isAuthenticated
-            ? const ChatScreen()
-            : const LoginScreen();
+        return auth.isAuthenticated ? const ChatScreen() : const LoginScreen();
       },
     );
   }

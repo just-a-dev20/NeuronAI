@@ -35,10 +35,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reset Password'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Reset Password'), centerTitle: true),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -67,10 +64,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                     const SizedBox(height: 8),
                     const Text(
                       'Enter your email address and we\'ll send you a link to reset your password.',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
@@ -123,10 +117,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                     const SizedBox(height: 8),
                     const Text(
                       'We\'ve sent a password reset link to your email address. Please check your inbox.',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),

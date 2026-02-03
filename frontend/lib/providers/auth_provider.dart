@@ -30,10 +30,7 @@ class AuthProvider extends ChangeNotifier {
 
       if (storedToken != null && storedUserId != null) {
         _token = storedToken;
-        _user = User(
-          id: storedUserId,
-          email: storedEmail ?? '',
-        );
+        _user = User(id: storedUserId, email: storedEmail ?? '');
         _apiService.setAuthToken(_token);
       }
 
@@ -55,10 +52,7 @@ class AuthProvider extends ChangeNotifier {
       final result = await _apiService.login(email, password);
 
       _token = result['token'];
-      _user = User(
-        id: result['user_id'],
-        email: email,
-      );
+      _user = User(id: result['user_id'], email: email);
 
       await _secureStorage.write(key: 'auth_token', value: _token);
       await _secureStorage.write(key: 'user_id', value: result['user_id']);

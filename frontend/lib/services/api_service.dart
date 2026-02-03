@@ -10,30 +10,34 @@ class ApiService {
   String? _authToken;
 
   ApiService({String baseUrl = 'http://localhost:8080'}) {
-    _dio = Dio(BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 60),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    ));
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 60),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
 
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) {
-        if (_authToken != null) {
-          options.headers['Authorization'] = 'Bearer $_authToken';
-        }
-        return handler.next(options);
-      },
-      onError: (error, handler) {
-        if (error.response?.statusCode == 401) {
-          // Handle token expiration
-        }
-        return handler.next(error);
-      },
-    ));
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          if (_authToken != null) {
+            options.headers['Authorization'] = 'Bearer $_authToken';
+          }
+          return handler.next(options);
+        },
+        onError: (error, handler) {
+          if (error.response?.statusCode == 401) {
+            // Handle token expiration
+          }
+          return handler.next(error);
+        },
+      ),
+    );
   }
 
   void setAuthToken(String? token) {
@@ -46,10 +50,10 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
-    final response = await _dio.post('/api/v1/auth/login', data: {
-      'email': email,
-      'password': password,
-    });
+    final response = await _dio.post(
+      '/api/v1/auth/login',
+      data: {'email': email, 'password': password},
+    );
     return response.data;
   }
 
@@ -64,12 +68,15 @@ class ApiService {
     String messageType = 'text',
     Map<String, dynamic>? metadata,
   }) async {
-    final response = await _dio.post('/api/v1/chat', data: {
-      'session_id': sessionId,
-      'content': content,
-      'message_type': messageType,
-      'metadata': metadata,
-    });
+    final response = await _dio.post(
+      '/api/v1/chat',
+      data: {
+        'session_id': sessionId,
+        'content': content,
+        'message_type': messageType,
+        'metadata': metadata,
+      },
+    );
     return response.data;
   }
 
@@ -85,9 +92,7 @@ class ApiService {
         'content': content,
         'message_type': messageType,
       },
-      options: Options(
-        responseType: ResponseType.stream,
-      ),
+      options: Options(responseType: ResponseType.stream),
     );
 
     final stream = response.data.stream as Stream<List<int>>;

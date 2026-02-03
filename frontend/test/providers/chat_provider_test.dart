@@ -27,13 +27,17 @@ class MockApiService implements ApiService {
   }
 
   @override
-  Future<String> uploadFile({required String filePath, required String sessionId}) async {
+  Future<String> uploadFile({
+    required String filePath,
+    required String sessionId,
+  }) async {
     throw UnimplementedError();
   }
 }
 
 class MockWebSocketService implements WebSocketService {
-  final StreamController<Map<String, dynamic>> _messageController = StreamController.broadcast();
+  final StreamController<Map<String, dynamic>> _messageController =
+      StreamController.broadcast();
 
   @override
   void dispose() {
@@ -46,7 +50,10 @@ class MockWebSocketService implements WebSocketService {
   }
 
   @override
-  Future<void> connect({required String userId, required String sessionId}) async {
+  Future<void> connect({
+    required String userId,
+    required String sessionId,
+  }) async {
     // Mock implementation
   }
 

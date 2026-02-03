@@ -20,9 +20,9 @@ class ChatProvider extends ChangeNotifier {
     required ApiService apiService,
     required WebSocketService wsService,
     String? authToken,
-  })  : _apiService = apiService,
-        _wsService = wsService,
-        _authToken = authToken {
+  }) : _apiService = apiService,
+       _wsService = wsService,
+       _authToken = authToken {
     _init();
   }
 
@@ -63,13 +63,13 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
 
     // Connect WebSocket for this session
-    await _wsService.connect(
-      userId: 'current_user',
-      sessionId: session.id,
-    );
+    await _wsService.connect(userId: 'current_user', sessionId: session.id);
   }
 
-  Future<void> sendMessage(String content, {String messageType = 'text'}) async {
+  Future<void> sendMessage(
+    String content, {
+    String messageType = 'text',
+  }) async {
     if (_currentSession == null) {
       await createSession();
     }
@@ -93,10 +93,7 @@ class ChatProvider extends ChangeNotifier {
 
     try {
       // Send via WebSocket for real-time updates
-      _wsService.sendMessage({
-        'content': content,
-        'message_type': messageType,
-      });
+      _wsService.sendMessage({'content': content, 'message_type': messageType});
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
@@ -133,15 +130,17 @@ class ChatProvider extends ChangeNotifier {
 
       final sessionsData = await _apiService.getSessions();
       _sessions.clear();
-      
+
       for (final sessionData in sessionsData) {
-        _sessions.add(ChatSession(
-          id: sessionData['id'],
-          userId: sessionData['user_id'],
-          title: sessionData['title'] ?? 'New Chat',
-          createdAt: DateTime.parse(sessionData['created_at']),
-          messages: [],
-        ));
+        _sessions.add(
+          ChatSession(
+            id: sessionData['id'],
+            userId: sessionData['user_id'],
+            title: sessionData['title'] ?? 'New Chat',
+            createdAt: DateTime.parse(sessionData['created_at']),
+            messages: [],
+          ),
+        );
       }
 
       _isLoading = false;

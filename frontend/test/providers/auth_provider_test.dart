@@ -28,7 +28,8 @@ class MockApiService implements ApiService {
     if (_loginError != null) {
       throw _loginError!;
     }
-    return _loginResult ?? {'token': 'default-token', 'user_id': 'default-user'};
+    return _loginResult ??
+        {'token': 'default-token', 'user_id': 'default-user'};
   }
 
   @override
@@ -42,7 +43,10 @@ class MockApiService implements ApiService {
   }
 
   @override
-  Future<String> uploadFile({required String filePath, required String sessionId}) async {
+  Future<String> uploadFile({
+    required String filePath,
+    required String sessionId,
+  }) async {
     throw UnimplementedError();
   }
 }

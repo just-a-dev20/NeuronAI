@@ -8,11 +8,7 @@ class MessageBubble extends StatelessWidget {
   final Message message;
   final bool isUser;
 
-  const MessageBubble({
-    super.key,
-    required this.message,
-    required this.isUser,
-  });
+  const MessageBubble({super.key, required this.message, required this.isUser});
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +97,7 @@ class MessageBubble extends StatelessWidget {
 
   Widget _buildImage(BuildContext context) {
     final imageUrl = message.content;
-    
+
     if (imageUrl.startsWith('http')) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -114,17 +110,13 @@ class MessageBubble extends StatelessWidget {
             width: 250,
             height: 200,
             color: Colors.grey[300],
-            child: const Center(
-              child: CircularProgressIndicator(),
-            ),
+            child: const Center(child: CircularProgressIndicator()),
           ),
           errorWidget: (context, url, error) => Container(
             width: 250,
             height: 200,
             color: Colors.grey[300],
-            child: const Center(
-              child: Icon(Icons.error, color: Colors.red),
-            ),
+            child: const Center(child: Icon(Icons.error, color: Colors.red)),
           ),
         ),
       );

@@ -6,6 +6,7 @@ from collections.abc import AsyncIterator
 from enum import Enum
 from typing import Any
 
+import httpx
 import requests
 import structlog
 
@@ -24,7 +25,16 @@ class LLMService:
     def __init__(self) -> None:
         self.settings = get_settings()
         self.logger = logger.bind(component="LLMService")
-        self.provider = LLMProvider(self.settings.llm_provider.lower())
+        self.api_key: str | None = None
+        self.base_url: str = ""
+
+        # Validate provider and use fallback on invalid value
+        provider_str = self.settings.llm_provider.lower()
+        try:
+            self.provider = LLMProvider(provider_str)
+        except ValueError:
+            self.logger.warning(f"Unknown LLM provider: {provider_str}, falling back to ollama")
+            self.provider = LLMProvider.OLLAMA
 
         if self.provider == LLMProvider.OPENAI:
             self.api_key = self.settings.openai_api_key
@@ -44,10 +54,6 @@ class LLMService:
             self.api_key = None
             self.base_url = self.settings.ollama_base_url
             self.logger.info("Initialized Ollama client")
-        else:
-            self.api_key = None
-            self.base_url = ""
-            self.logger.error(f"Unknown LLM provider: {self.provider}")
 
     def _build_messages(self, prompt: str, system_prompt: str | None) -> list[dict[str, str]]:
         messages = [{"role": "system", "content": system_prompt}] if system_prompt else []
@@ -65,8 +71,8 @@ class LLMService:
         return {
             "model": model or self.settings.default_model,
             "messages": messages,
-            "max_tokens": max_tokens or self.settings.max_tokens,
-            "temperature": temperature or self.settings.temperature,
+            "max_tokens": max_tokens if max_tokens is not None else self.settings.max_tokens,
+            "temperature": temperature if temperature is not None else self.settings.temperature,
             "stream": stream,
         }
 
@@ -151,16 +157,18 @@ class LLMService:
         max_tokens: int | None,
         temperature: float | None,
     ) -> dict[str, Any]:
+        options: dict[str, Any] = {
+            "temperature": temperature if temperature is not None else self.settings.temperature,
+        }
+        if max_tokens is not None:
+            options["num_predict"] = max_tokens
+
         payload = {
             "model": model,
             "messages": messages,
             "stream": False,
-            "options": {
-                "temperature": temperature or self.settings.temperature,
-            },
+            "options": options,
         }
-        if max_tokens:
-            payload["options"]["num_predict"] = max_tokens
 
         self.logger.info("Generating Ollama response", model=model)
 
@@ -239,59 +247,68 @@ class LLMService:
         )
 
         full_content = ""
-        response = await asyncio.to_thread(
-            requests.post,
-            f"{self.base_url}/chat/completions",
-            headers=self._get_headers(),
-            json=payload,
-            stream=True,
-            timeout=60,
-        )
-        response.raise_for_status()
+        async with (
+            httpx.AsyncClient() as client,
+            client.stream(
+                "POST",
+                f"{self.base_url}/chat/completions",
+                headers=self._get_headers(),
+                json=payload,
+                timeout=60,
+            ) as response,
+        ):
+            response.raise_for_status()
 
-        for line in response.iter_lines():
-            if not line:
-                continue
+            async for line in response.aiter_lines():
+                if not line:
+                    continue
 
-            line_text = line.decode("utf-8")
-            if not line_text.startswith("data: "):
-                continue
+                if not line.startswith("data: "):
+                    continue
 
-            data_str = line_text[6:]
-            if data_str == "[DONE]":
-                self.logger.info(
-                    "Completed streaming LLM response",
-                    finish_reason="stop",
-                    content_length=len(full_content),
-                )
-                yield {"content": full_content, "is_final": True, "finish_reason": "stop"}
-                return
-
-            try:
-                chunk = json.loads(data_str)
-                delta = chunk["choices"][0].get("delta", {})
-                content_delta = delta.get("content", "")
-
-                if content_delta:
-                    full_content += content_delta
-                    yield {"content": full_content, "delta": content_delta, "is_final": False}
-
-                finish_reason = chunk["choices"][0].get("finish_reason")
-                if finish_reason:
+                data_str = line[6:]
+                if data_str == "[DONE]":
                     self.logger.info(
                         "Completed streaming LLM response",
-                        finish_reason=finish_reason,
+                        finish_reason="stop",
                         content_length=len(full_content),
                     )
                     yield {
                         "content": full_content,
                         "is_final": True,
-                        "finish_reason": finish_reason,
+                        "finish_reason": "stop",
                     }
                     return
 
-            except json.JSONDecodeError:
-                continue
+                try:
+                    chunk = json.loads(data_str)
+                    delta = chunk["choices"][0].get("delta", {})
+                    content_delta = delta.get("content", "")
+
+                    if content_delta:
+                        full_content += content_delta
+                        yield {
+                            "content": full_content,
+                            "delta": content_delta,
+                            "is_final": False,
+                        }
+
+                    finish_reason = chunk["choices"][0].get("finish_reason")
+                    if finish_reason:
+                        self.logger.info(
+                            "Completed streaming LLM response",
+                            finish_reason=finish_reason,
+                            content_length=len(full_content),
+                        )
+                        yield {
+                            "content": full_content,
+                            "is_final": True,
+                            "finish_reason": finish_reason,
+                        }
+                        return
+
+                except json.JSONDecodeError:
+                    continue
 
     async def _generate_ollama_stream(
         self,
@@ -300,53 +317,65 @@ class LLMService:
         max_tokens: int | None,
         temperature: float | None,
     ) -> AsyncIterator[dict[str, Any]]:
+        options: dict[str, Any] = {
+            "temperature": temperature if temperature is not None else self.settings.temperature,
+        }
+        if max_tokens is not None:
+            options["num_predict"] = max_tokens
+
         payload = {
             "model": model,
             "messages": messages,
             "stream": True,
-            "options": {
-                "temperature": temperature or self.settings.temperature,
-            },
+            "options": options,
         }
-        if max_tokens:
-            payload["options"]["num_predict"] = max_tokens
 
         self.logger.info("Generating Ollama streaming response", model=model)
 
         full_content = ""
-        response = await asyncio.to_thread(
-            requests.post,
-            f"{self.base_url}/api/chat",
-            headers=self._get_headers(),
-            json=payload,
-            stream=True,
-            timeout=60,
-        )
-        response.raise_for_status()
+        async with (
+            httpx.AsyncClient() as client,
+            client.stream(
+                "POST",
+                f"{self.base_url}/api/chat",
+                headers=self._get_headers(),
+                json=payload,
+                timeout=60,
+            ) as response,
+        ):
+            response.raise_for_status()
 
-        for line in response.iter_lines():
-            if not line:
-                continue
+            async for line in response.aiter_lines():
+                if not line:
+                    continue
 
-            try:
-                chunk = json.loads(line.decode("utf-8"))
-                content_delta = chunk.get("message", {}).get("content", "")
-                done = chunk.get("done", False)
+                try:
+                    chunk = json.loads(line)
+                    content_delta = chunk.get("message", {}).get("content", "")
+                    done = chunk.get("done", False)
 
-                if content_delta:
-                    full_content += content_delta
-                    yield {"content": full_content, "delta": content_delta, "is_final": False}
+                    if content_delta:
+                        full_content += content_delta
+                        yield {
+                            "content": full_content,
+                            "delta": content_delta,
+                            "is_final": False,
+                        }
 
-                if done:
-                    self.logger.info(
-                        "Completed Ollama streaming response",
-                        content_length=len(full_content),
-                    )
-                    yield {"content": full_content, "is_final": True, "finish_reason": "stop"}
-                    return
+                    if done:
+                        self.logger.info(
+                            "Completed Ollama streaming response",
+                            content_length=len(full_content),
+                        )
+                        yield {
+                            "content": full_content,
+                            "is_final": True,
+                            "finish_reason": "stop",
+                        }
+                        return
 
-            except json.JSONDecodeError:
-                continue
+                except json.JSONDecodeError:
+                    continue
 
     def get_model_info(self) -> dict[str, Any]:
         client_initialized = True if self.provider == LLMProvider.OLLAMA else bool(self.api_key)

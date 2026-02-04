@@ -18,6 +18,7 @@ dependencies = [
     "structlog>=24.1.0",
     "uvicorn>=0.25.0",
     "fastapi>=0.109.0",
+    "httpx>=0.26.0",
 ]
 
 [project.optional-dependencies]
@@ -30,6 +31,7 @@ dev = [
     "types-python-jose>=3.3.0",
     "grpc-stubs>=1.53.0",
     "types-protobuf>=4.24.0",
+    "types-requests>=2.31.0",
 ]
 
 [build-system]
@@ -63,4 +65,10 @@ warn_unused_ignores = true
 exclude = [
 # Excludeing entire directory could cause problems but IDC
     "src/neuronai/grpc/",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+    "types-requests>=2.32.4.20260107",
 ]

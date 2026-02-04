@@ -1,5 +1,3 @@
-"""JWT validation utilities."""
-
 from typing import Any
 
 from jose import JWTError, jwt

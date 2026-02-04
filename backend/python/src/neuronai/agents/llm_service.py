@@ -1,12 +1,14 @@
 """LLM service for handling AI model interactions."""
 
+import asyncio
+import json
 from collections.abc import AsyncIterator
 from enum import Enum
 from typing import Any
 
+import httpx
+import requests
 import structlog
-from openai import AsyncOpenAI
-from openai.types.chat import ChatCompletionMessageParam
 
 from neuronai.config.settings import get_settings
 
@@ -14,32 +16,74 @@ logger = structlog.get_logger()
 
 
 class LLMProvider(Enum):
-    """Supported LLM providers."""
-
     OPENAI = "openai"
-    CLAUDE = "claude"
+    OPENROUTER = "openrouter"
+    OLLAMA = "ollama"
 
 
 class LLMService:
-    """Service for interacting with LLM APIs."""
-
     def __init__(self) -> None:
-        """Initialize the LLM service with settings."""
         self.settings = get_settings()
         self.logger = logger.bind(component="LLMService")
+        self.api_key: str | None = None
+        self.base_url: str = ""
 
-        self.client: AsyncOpenAI | None = None
-        self.provider = LLMProvider.OPENAI
+        # Validate provider and use fallback on invalid value
+        provider_str = self.settings.llm_provider.lower()
+        try:
+            self.provider = LLMProvider(provider_str)
+        except ValueError:
+            self.logger.warning(f"Unknown LLM provider: {provider_str}, falling back to ollama")
+            self.provider = LLMProvider.OLLAMA
 
-        self._initialize_client()
+        if self.provider == LLMProvider.OPENAI:
+            self.api_key = self.settings.openai_api_key
+            self.base_url = "https://api.openai.com/v1"
+            if self.api_key:
+                self.logger.info("Initialized OpenAI client")
+            else:
+                self.logger.warning("No valid OpenAI credentials found")
+        elif self.provider == LLMProvider.OPENROUTER:
+            self.api_key = self.settings.openrouter_api_key
+            self.base_url = "https://openrouter.ai/api/v1"
+            if self.api_key:
+                self.logger.info("Initialized OpenRouter client")
+            else:
+                self.logger.warning("No valid OpenRouter credentials found")
+        elif self.provider == LLMProvider.OLLAMA:
+            self.api_key = None
+            self.base_url = self.settings.ollama_base_url
+            self.logger.info("Initialized Ollama client")
 
-    def _initialize_client(self) -> None:
-        """Initialize the LLM client based on provider."""
-        if self.provider == LLMProvider.OPENAI and self.settings.openai_api_key:
-            self.client = AsyncOpenAI(api_key=self.settings.openai_api_key)
-            self.logger.info("Initialized OpenAI client")
-        else:
-            self.logger.warning("No valid LLM credentials found")
+    def _build_messages(self, prompt: str, system_prompt: str | None) -> list[dict[str, str]]:
+        messages = [{"role": "system", "content": system_prompt}] if system_prompt else []
+        messages.append({"role": "user", "content": prompt})
+        return messages
+
+    def _build_payload(
+        self,
+        messages: list[dict[str, str]],
+        model: str | None,
+        max_tokens: int | None,
+        temperature: float | None,
+        stream: bool = False,
+    ) -> dict[str, Any]:
+        return {
+            "model": model or self.settings.default_model,
+            "messages": messages,
+            "max_tokens": max_tokens if max_tokens is not None else self.settings.max_tokens,
+            "temperature": temperature if temperature is not None else self.settings.temperature,
+            "stream": stream,
+        }
+
+    def _get_headers(self) -> dict[str, str]:
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        return headers
+
+    def _error_response(self, message: str, error_code: str) -> dict[str, Any]:
+        return {"content": f"Error: {message}", "error": error_code}
 
     async def generate_response(
         self,
@@ -49,68 +93,105 @@ class LLMService:
         max_tokens: int | None = None,
         temperature: float | None = None,
     ) -> dict[str, Any]:
-        """Generate a response from the LLM.
-
-        Args:
-            prompt: The user's prompt
-            system_prompt: Optional system prompt for context
-            model: Model to use (defaults to settings.default_model)
-            max_tokens: Maximum tokens to generate
-            temperature: Temperature for generation (0.0-2.0)
-
-        Returns:
-            Dictionary containing the response and metadata
-        """
-        if self.client is None:
+        if self.provider != LLMProvider.OLLAMA and not self.api_key:
             self.logger.error("LLM client not initialized")
-            return {
-                "content": "Error: LLM service not properly configured",
-                "error": "client_not_initialized",
-            }
+            return self._error_response(
+                "LLM service not properly configured", "client_not_initialized"
+            )
 
         try:
-            messages: list[ChatCompletionMessageParam] = []
+            messages = self._build_messages(prompt, system_prompt)
+            model_name = model or self.settings.default_model
 
-            if system_prompt:
-                messages.append({"role": "system", "content": system_prompt})
-
-            messages.append({"role": "user", "content": prompt})
-
-            self.logger.info(
-                "Generating LLM response",
-                model=model or self.settings.default_model,
-                prompt_length=len(prompt),
-            )
-
-            response = await self.client.chat.completions.create(
-                model=model or self.settings.default_model,
-                messages=messages,
-                max_tokens=max_tokens if max_tokens is not None else self.settings.max_tokens,
-                temperature=temperature if temperature is not None else self.settings.temperature,
-            )
-
-            content = response.choices[0].message.content
-            tokens_used = response.usage.total_tokens if response.usage else 0
-
-            self.logger.info(
-                "Generated LLM response",
-                tokens_used=tokens_used,
-                model=response.model,
-            )
-
-            return {
-                "content": content,
-                "model": response.model,
-                "tokens_used": tokens_used,
-                "finish_reason": response.choices[0].finish_reason,
-            }
+            if self.provider == LLMProvider.OLLAMA:
+                return await self._generate_ollama_response(
+                    messages, model_name, max_tokens, temperature
+                )
+            else:
+                return await self._generate_openai_compatible_response(
+                    messages, model_name, max_tokens, temperature
+                )
 
         except Exception as e:
             self.logger.error("Error generating LLM response", error=str(e))
-            return {
-                "content": f"Error: {str(e)}",
-                "error": "generation_failed",
-            }
+            return self._error_response(str(e), "generation_failed")
+
+    async def _generate_openai_compatible_response(
+        self,
+        messages: list[dict[str, str]],
+        model: str,
+        max_tokens: int | None,
+        temperature: float | None,
+    ) -> dict[str, Any]:
+        payload = self._build_payload(messages, model, max_tokens, temperature)
+
+        self.logger.info("Generating LLM response", model=model, provider=self.provider.value)
+
+        response = await asyncio.to_thread(
+            requests.post,
+            f"{self.base_url}/chat/completions",
+            headers=self._get_headers(),
+            json=payload,
+            timeout=60,
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        content = data["choices"][0]["message"]["content"]
+        tokens_used = data.get("usage", {}).get("total_tokens", 0)
+        model_used = data.get("model", model)
+
+        self.logger.info("Generated LLM response", tokens_used=tokens_used, model=model_used)
+
+        return {
+            "content": content,
+            "model": model_used,
+            "tokens_used": tokens_used,
+            "finish_reason": data["choices"][0].get("finish_reason"),
+        }
+
+    async def _generate_ollama_response(
+        self,
+        messages: list[dict[str, str]],
+        model: str,
+        max_tokens: int | None,
+        temperature: float | None,
+    ) -> dict[str, Any]:
+        options: dict[str, Any] = {
+            "temperature": temperature if temperature is not None else self.settings.temperature,
+        }
+        if max_tokens is not None:
+            options["num_predict"] = max_tokens
+
+        payload = {
+            "model": model,
+            "messages": messages,
+            "stream": False,
+            "options": options,
+        }
+
+        self.logger.info("Generating Ollama response", model=model)
+
+        response = await asyncio.to_thread(
+            requests.post,
+            f"{self.base_url}/api/chat",
+            headers=self._get_headers(),
+            json=payload,
+            timeout=60,
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        content = data["message"]["content"]
+
+        self.logger.info("Generated Ollama response", model=model)
+
+        return {
+            "content": content,
+            "model": model,
+            "tokens_used": 0,
+            "finish_reason": "stop",
+        }
 
     async def generate_stream(
         self,
@@ -120,19 +201,7 @@ class LLMService:
         max_tokens: int | None = None,
         temperature: float | None = None,
     ) -> AsyncIterator[dict[str, Any]]:
-        """Generate a streaming response from the LLM.
-
-        Args:
-            prompt: The user's prompt
-            system_prompt: Optional system prompt for context
-            model: Model to use (defaults to settings.default_model)
-            max_tokens: Maximum tokens to generate
-            temperature: Temperature for generation (0.0-2.0)
-
-        Yields:
-            Dictionaries containing chunks of the response
-        """
-        if self.client is None:
+        if self.provider != LLMProvider.OLLAMA and not self.api_key:
             self.logger.error("LLM client not initialized")
             yield {
                 "content": "Error: LLM service not properly configured",
@@ -142,51 +211,19 @@ class LLMService:
             return
 
         try:
-            messages: list[ChatCompletionMessageParam] = []
+            messages = self._build_messages(prompt, system_prompt)
+            model_name = model or self.settings.default_model
 
-            if system_prompt:
-                messages.append({"role": "system", "content": system_prompt})
-
-            messages.append({"role": "user", "content": prompt})
-
-            self.logger.info(
-                "Generating streaming LLM response",
-                model=model or self.settings.default_model,
-                prompt_length=len(prompt),
-            )
-
-            stream = await self.client.chat.completions.create(
-                model=model or self.settings.default_model,
-                messages=messages,
-                max_tokens=max_tokens if max_tokens is not None else self.settings.max_tokens,
-                temperature=temperature if temperature is not None else self.settings.temperature,
-                stream=True,
-            )
-
-            full_content = ""
-
-            async for chunk in stream:
-                delta = chunk.choices[0].delta
-
-                if delta.content:
-                    full_content += delta.content
-                    yield {
-                        "content": full_content,
-                        "delta": delta.content,
-                        "is_final": False,
-                    }
-
-                if chunk.choices[0].finish_reason:
-                    self.logger.info(
-                        "Completed streaming LLM response",
-                        finish_reason=chunk.choices[0].finish_reason,
-                        content_length=len(full_content),
-                    )
-                    yield {
-                        "content": full_content,
-                        "is_final": True,
-                        "finish_reason": chunk.choices[0].finish_reason,
-                    }
+            if self.provider == LLMProvider.OLLAMA:
+                async for chunk in self._generate_ollama_stream(
+                    messages, model_name, max_tokens, temperature
+                ):
+                    yield chunk
+            else:
+                async for chunk in self._generate_openai_compatible_stream(
+                    messages, model_name, max_tokens, temperature
+                ):
+                    yield chunk
 
         except Exception as e:
             self.logger.error("Error in LLM stream generation", error=str(e))
@@ -196,12 +233,158 @@ class LLMService:
                 "is_final": True,
             }
 
+    async def _generate_openai_compatible_stream(
+        self,
+        messages: list[dict[str, str]],
+        model: str,
+        max_tokens: int | None,
+        temperature: float | None,
+    ) -> AsyncIterator[dict[str, Any]]:
+        payload = self._build_payload(messages, model, max_tokens, temperature, stream=True)
+
+        self.logger.info(
+            "Generating streaming LLM response", model=model, provider=self.provider.value
+        )
+
+        full_content = ""
+        async with (
+            httpx.AsyncClient() as client,
+            client.stream(
+                "POST",
+                f"{self.base_url}/chat/completions",
+                headers=self._get_headers(),
+                json=payload,
+                timeout=60,
+            ) as response,
+        ):
+            response.raise_for_status()
+
+            async for line in response.aiter_lines():
+                if not line:
+                    continue
+
+                if not line.startswith("data: "):
+                    continue
+
+                data_str = line[6:]
+                if data_str == "[DONE]":
+                    self.logger.info(
+                        "Completed streaming LLM response",
+                        finish_reason="stop",
+                        content_length=len(full_content),
+                    )
+                    yield {
+                        "content": full_content,
+                        "is_final": True,
+                        "finish_reason": "stop",
+                    }
+                    return
+
+                try:
+                    chunk = json.loads(data_str)
+                    delta = chunk["choices"][0].get("delta", {})
+                    content_delta = delta.get("content", "")
+
+                    if content_delta:
+                        full_content += content_delta
+                        yield {
+                            "content": full_content,
+                            "delta": content_delta,
+                            "is_final": False,
+                        }
+
+                    finish_reason = chunk["choices"][0].get("finish_reason")
+                    if finish_reason:
+                        self.logger.info(
+                            "Completed streaming LLM response",
+                            finish_reason=finish_reason,
+                            content_length=len(full_content),
+                        )
+                        yield {
+                            "content": full_content,
+                            "is_final": True,
+                            "finish_reason": finish_reason,
+                        }
+                        return
+
+                except json.JSONDecodeError:
+                    continue
+
+    async def _generate_ollama_stream(
+        self,
+        messages: list[dict[str, str]],
+        model: str,
+        max_tokens: int | None,
+        temperature: float | None,
+    ) -> AsyncIterator[dict[str, Any]]:
+        options: dict[str, Any] = {
+            "temperature": temperature if temperature is not None else self.settings.temperature,
+        }
+        if max_tokens is not None:
+            options["num_predict"] = max_tokens
+
+        payload = {
+            "model": model,
+            "messages": messages,
+            "stream": True,
+            "options": options,
+        }
+
+        self.logger.info("Generating Ollama streaming response", model=model)
+
+        full_content = ""
+        async with (
+            httpx.AsyncClient() as client,
+            client.stream(
+                "POST",
+                f"{self.base_url}/api/chat",
+                headers=self._get_headers(),
+                json=payload,
+                timeout=60,
+            ) as response,
+        ):
+            response.raise_for_status()
+
+            async for line in response.aiter_lines():
+                if not line:
+                    continue
+
+                try:
+                    chunk = json.loads(line)
+                    content_delta = chunk.get("message", {}).get("content", "")
+                    done = chunk.get("done", False)
+
+                    if content_delta:
+                        full_content += content_delta
+                        yield {
+                            "content": full_content,
+                            "delta": content_delta,
+                            "is_final": False,
+                        }
+
+                    if done:
+                        self.logger.info(
+                            "Completed Ollama streaming response",
+                            content_length=len(full_content),
+                        )
+                        yield {
+                            "content": full_content,
+                            "is_final": True,
+                            "finish_reason": "stop",
+                        }
+                        return
+
+                except json.JSONDecodeError:
+                    continue
+
     def get_model_info(self) -> dict[str, Any]:
-        """Get information about available models."""
+        client_initialized = True if self.provider == LLMProvider.OLLAMA else bool(self.api_key)
+
         return {
             "provider": self.provider.value,
+            "base_url": self.base_url,
             "default_model": self.settings.default_model,
             "max_tokens": self.settings.max_tokens,
             "temperature": self.settings.temperature,
-            "client_initialized": self.client is not None,
+            "client_initialized": client_initialized,
         }

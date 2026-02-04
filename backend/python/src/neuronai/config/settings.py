@@ -21,7 +21,10 @@ class Settings(BaseSettings):
     supabase_key: str = ""
 
     # LLM Configuration
+    llm_provider: str = "openai"
     openai_api_key: str = ""
+    openrouter_api_key: str = ""
+    ollama_base_url: str = "http://localhost:11434"
     default_model: str = "gpt-4"
     max_tokens: int = 4096
     temperature: float = 0.7

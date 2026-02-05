@@ -36,21 +36,14 @@ NeuronAI/
 ### One-Line Installer (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yourusername/neuronai/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/just-a-dev20/NeuronAI/main/install.sh | bash
 ```
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/yourusername/neuronai/main/install.sh -o install.sh
-cat install.sh  # Review the script
-bash install.sh
-```
-
 ### Self-Hosted Deployment
 
 The easiest way to get started is using Docker Compose with the self-hosted configuration:
 
 ```bash
-git clone https://github.com/yourusername/neuronai.git  # Replace 'yourusername' with actual GitHub username
+git clone https://github.com/just-a-dev20/neuronai.git
 cd neuronai/infra/docker
 
 # Copy and edit environment configuration
@@ -73,7 +66,7 @@ See [Self-Hosting Guide](infra/docker/SELFHOSTING.md) for detailed instructions.
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/neuronai.git
+git clone https://github.com/just-a-dev20/neuronai.git
 cd neuronai
 ```
 

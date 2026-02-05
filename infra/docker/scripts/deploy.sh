@@ -24,7 +24,7 @@ check_prerequisites() {
         exit 1
     fi
     
-    if ! command -v docker-compose &> /dev/null; then
+    if ! command -v docker compose &> /dev/null; then
         echo "ERROR: Docker Compose is not installed"
         exit 1
     fi
@@ -79,10 +79,10 @@ deploy_services() {
     
     if [ "$ENVIRONMENT" = "production" ]; then
         echo "Starting in production mode with nginx..."
-        docker-compose -f docker-compose.selfhosted.yml --profile production up -d --build
+        docker compose -f docker-compose.selfhosted.yml --profile production up -d --build
     else
         echo "Starting in development mode..."
-        docker-compose -f docker-compose.selfhosted.yml up -d --build
+        docker compose -f docker-compose.selfhosted.yml up -d --build
     fi
     
     echo "✓ Services deployed"

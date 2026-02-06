@@ -24,7 +24,7 @@ check_prerequisites() {
         exit 1
     fi
     
-    if ! command -v docker-compose &> /dev/null; then
+    if ! docker compose version &> /dev/null; then
         echo "ERROR: Docker Compose is not installed"
         exit 1
     fi
@@ -79,10 +79,10 @@ deploy_services() {
     
     if [ "$ENVIRONMENT" = "production" ]; then
         echo "Starting in production mode with nginx..."
-        docker-compose -f docker-compose.selfhosted.yml --profile production up -d --build
+        docker compose -f docker-compose.selfhosted.yml --profile production up -d --build
     else
         echo "Starting in development mode..."
-        docker-compose -f docker-compose.selfhosted.yml up -d --build
+        docker compose -f docker-compose.selfhosted.yml up -d --build
     fi
     
     echo "✓ Services deployed"
@@ -96,7 +96,7 @@ wait_for_health() {
     
     # Wait for postgres
     echo "  - Waiting for PostgreSQL..."
-    until docker-compose -f docker-compose.selfhosted.yml exec -T postgres pg_isready -U "${POSTGRES_USER:-neuronai}" -d "${POSTGRES_DB:-neuronai}" > /dev/null 2>&1; do
+    until docker compose -f docker-compose.selfhosted.yml exec -T postgres pg_isready -U "${POSTGRES_USER:-neuronai}" -d "${POSTGRES_DB:-neuronai}" > /dev/null 2>&1; do
         sleep 2
     done
     echo "    ✓ PostgreSQL is ready"
@@ -143,9 +143,9 @@ show_status() {
     echo "⚠️  IMPORTANT: Change the default admin password immediately!"
     echo ""
     echo "Useful commands:"
-    echo "  - View logs:       docker-compose -f docker-compose.selfhosted.yml logs -f"
-    echo "  - Stop services:   docker-compose -f docker-compose.selfhosted.yml down"
-    echo "  - Restart:         docker-compose -f docker-compose.selfhosted.yml restart"
+    echo "  - View logs:       docker compose -f docker-compose.selfhosted.yml logs -f"
+    echo "  - Stop services:   docker compose -f docker-compose.selfhosted.yml down"
+    echo "  - Restart:         docker compose -f docker-compose.selfhosted.yml restart"
     echo ""
 }
 
